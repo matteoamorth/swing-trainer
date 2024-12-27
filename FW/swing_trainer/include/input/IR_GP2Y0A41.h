@@ -1,7 +1,7 @@
 #ifndef IR_GP2Y0A41_H
 #define IR_GP2Y0A41_H
 
-#include "defines.h"
+#include "../defines.h"
 
 //  GP2Y0A41SK0F proximity sensor 
 
@@ -15,7 +15,6 @@
  * IR-LED (infrared emitting diode) and signal processing circuit.
  */
 typedef struct IR_GP2Y0A41_t IR_GP2Y0A41_t;
-
 /**
  * @brief Creates a new IR_GP2Y0A41 sensor instance.
  * 

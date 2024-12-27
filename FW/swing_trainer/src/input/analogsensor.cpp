@@ -1,4 +1,4 @@
-#include "analogsensor.h"
+#include "../../include/input/analogsensor.h"
 
 typedef struct analogin_t{
     uint8_t pin;
@@ -43,7 +43,7 @@ data_t sensor_read_filtered(analogin_t const *s){
     data_t m = 0;
 
     for (uint8_t i = 0; i < AVERAGE_READ; i++){
-        m += IR_read(s);
+        m += sensor_read(s);
     }
     
     return m / AVERAGE_READ;

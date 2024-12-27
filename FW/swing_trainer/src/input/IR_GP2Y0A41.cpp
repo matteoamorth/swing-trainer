@@ -1,4 +1,4 @@
-#include "IR_GP2Y0A41.h"
+#include "../../include/input/IR_GP2Y0A41.h"
 
 //   _____ _____     _____                            
 //  |_   _|  __ \   / ____|                           
@@ -8,14 +8,10 @@
 //  |_____|_|  \_\ |_____/ \___|_| |_|___/\___/|_|                                      
 // GP2Y0A41 IR sensor
 
-
 typedef struct IR_GP2Y0A41_t {
     uint8_t pin;   // Analog pin number connected to the sensor. 
     data_t k;      // Costant factor
 } IR_GP2Y0A41_t;
-
-
-
 
 //   _____                 _   _
 //  |  ___|   _ _ __   ___| |_(_) ___  _ __  ___

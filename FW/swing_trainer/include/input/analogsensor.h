@@ -1,14 +1,15 @@
 #ifndef ANALOGSENSOR_H
 #define ANALOGSENSOR_H
 
-#include "defines.h"
+#include "../defines.h"
+typedef float data_t;
 
 /**
  * @brief Represents a generic analog sensor instance.
  * 
  * It can be used with any type of passive analog sensor.
  */
-typedef struct generic_sensor analogin_t;
+typedef struct analogin_t analogin_t;
 
 /**
  * @brief Creates a new generic analog sensor instance.
@@ -23,7 +24,7 @@ typedef struct generic_sensor analogin_t;
  * 
  * @return A pointer to the newly created sensor structure, or NULL if memory allocation fails.
  */
-analogin_t sensor_new(uint8_t _pin, uint8_t v_supply, uint8_t bits, data_t offset);
+analogin_t *sensor_new(uint8_t _pin, uint8_t v_supply, uint8_t bits, data_t offset);
  
 /**
  * @brief Frees the memory allocated for a generic sensor instance.

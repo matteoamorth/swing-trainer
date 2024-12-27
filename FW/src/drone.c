@@ -1,6 +1,0 @@
-/**
- * 
- * Firmware of the drone
- * 
- */
-

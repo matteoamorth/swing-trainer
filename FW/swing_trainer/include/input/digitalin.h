@@ -8,7 +8,7 @@
 #ifndef DIGITALIN_H
 #define DIGITALIN_H
 
-#include "defines.h"
+#include "../defines.h"
 
 /**
  * @struct digitalin_t
@@ -25,11 +25,7 @@
  * @param reverse
  * Whether the input logic is reversed (active LOW instead of active HIGH).
  */
-typedef struct digitalin_t {
-    uint8_t pin;       ///< Pin number associated with the digital input.
-    uint8_t t;         ///< Debounce time in milliseconds.
-    bool reverse;      ///< Logic reversal flag.
-} digitalin_t;
+typedef struct digitalin_t digitalin_t;
 
 /**
  * @brief Creates and initializes a new digital input instance.

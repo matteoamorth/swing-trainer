@@ -9,6 +9,7 @@
 #ifndef ADXL337_H
 #define ADXL337_H
 
+#include "../defines.h"
 #include "analogsensor.h"
 
 /**
@@ -19,12 +20,7 @@
  * scaling factors to convert raw ADC values into meaningful acceleration data.
  * The 
  */
-typedef struct ac337_t {
-    analogin_t *x; ///< Pointer to the X-axis sensor.
-    analogin_t *y; ///< Pointer to the Y-axis sensor.
-    analogin_t *z; ///< Pointer to the Z-axis sensor.
-    data_t k;    ///< Scaling factor.
-} ac337_t;
+typedef struct ac337_t ac337_t;
 
 /**
  * @brief Creates and initializes an ADXL337 accelerometer instance.

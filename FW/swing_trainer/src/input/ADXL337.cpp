@@ -1,12 +1,11 @@
-#include "ADXL337.h"
-#include "analogsensor.h"
+#include "../../include/input/ADXL337.h"
 
 typedef struct ac337_t {
-    analogin_t *x;
-    analogin_t *y;
-    analogin_t *z;
-    data_t k;
-}ac337_t;
+    analogin_t *x; ///< Pointer to the X-axis sensor.
+    analogin_t *y; ///< Pointer to the Y-axis sensor.
+    analogin_t *z; ///< Pointer to the Z-axis sensor.
+    data_t k;    ///< Scaling factor.
+} ac337_t;
 
 ac337_t *ac337_new(uint8_t pin_x, uint8_t pin_y, uint8_t pin_z, data_t v_supply,uint8_t bits){
     ac337_t *s = malloc(sizeof(ac337_t));
@@ -42,6 +41,7 @@ void ac337_free(ac337_t *s){
     free(s);
 }
 
+/*
 #define ac337_getters(axis)                                 \
     data_t ac337_read_##axis(ac337_t const *s){             \
         assert(s);                                          \
@@ -56,7 +56,7 @@ void ac337_free(ac337_t *s){
 ac337_getters(x);
 ac337_getters(y);
 ac337_getters(z);
-
+*/
 #ifdef ADXL337_MAIN
 
 #include "ADXL337.h"

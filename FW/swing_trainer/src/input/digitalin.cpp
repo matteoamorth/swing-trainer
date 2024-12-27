@@ -1,10 +1,10 @@
-#include "digitalin.h"
+#include "../../include/input/digitalin.h"
 
-typedef struct digitalin_t{
-    uint8_t pin;
-    uint8_t t;
-    bool reverse;
-}digitalin_t;
+typedef struct digitalin_t {
+    uint8_t pin;       ///< Pin number associated with the digital input.
+    uint8_t t;         ///< Debounce time in milliseconds.
+    bool reverse;      ///< Logic reversal flag.
+} digitalin_t;
 
 digitalin_t* digital_new(uint8_t _pin, uint8_t debounce_time, bool internal_pullup,bool reverse_logic){
     digitalin_t *i = malloc(sizeof(digitalin_t));
