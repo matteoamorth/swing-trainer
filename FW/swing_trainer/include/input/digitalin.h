@@ -67,4 +67,16 @@ void digital_free(digitalin_t *i);
  */
 bool digital_read(digitalin_t *i);
 
+/**
+ * @brief Reads if new status is available.
+ * 
+ * Compares time provided with the stored one, preventing the debouncing problem.
+ * 
+ * @param i A pointer to the `digitalin_t` instance representing the pin.
+ * @param t_stamp Timestamp of the event.
+ * @return If there is a new push or it is debouncing.
+ * 
+ */
+bool digital_new_status(digitalin_t *i, unsigned long t_stamp);
+
 #endif 

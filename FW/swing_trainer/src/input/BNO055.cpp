@@ -36,11 +36,51 @@ bno055_t *imu_new(uint8_t _id, uint8_t pin_sda, uint8_t pin_scl, bool calibrate)
 //   _| |_| |  | | |__| |  ____) |  __/ |_| ||  __/ |  \__ \
 //  |_____|_|  |_|\____/  |_____/ \___|\__|\__\___|_|  |___/
                                                                                                               
-bool imu_connected(bno055_t *i)
+bool imu_connected(bno055_t *i){
+    assert(i);
     return i->bno.begin();
-
-void imu_set_external_crystal(bno055_t *i)
+}
+void imu_set_external_crystal(bno055_t *i){
+    assert(i);
     i->bno.setExtCrystalUse(true);
+}
+
+float imu_euler_x(bno055_t *i){
+    assert(i);
+    return i->bno.getVector(Adafruit_BNO055::VECTOR_EULER).x();
+}
+
+float imu_acc_x(bno055_t *i){
+    assert(i);
+    sensors_event_t a;
+    i->bno.getEvent(&a, Adafruit_BNO055::VECTOR_ACCELEROMETER);
+    return a.acceleration.x;
+}
+
+float imu_acc_y(bno055_t *i){
+    assert(i);
+    sensors_event_t a;
+    i->bno.getEvent(&a, Adafruit_BNO055::VECTOR_ACCELEROMETER);
+    return a.acceleration.y;
+}
+
+float imu_acc_z(bno055_t *i){
+    assert(i);
+    sensors_event_t a;
+    i->bno.getEvent(&a, Adafruit_BNO055::VECTOR_ACCELEROMETER);
+    return a.acceleration.z;
+}
+    
+#define imu_acc_getter(axis)                                        \
+    float imu_acc_##axis(bno055_t const *i) {                       \
+        assert(i);                                                  \
+        sensors_event_t a;                                          \
+        i->bno.getEvent(&a, Adafruit_BNO055::VECTOR_ACCELEROMETER); \
+        return a.acceleration.axis;                                 \
+    }
+
+// Generazione delle funzioni
+
 
 //    _____      _ _ _               _   _             
 //   / ____|    | (_) |             | | (_)            
@@ -52,10 +92,11 @@ void imu_set_external_crystal(bno055_t *i)
 
 void create_calibration(bno055_t *i){
     assert(i);
+    uint8_t system, gyro, accel, mag = 0;
 
     while (!i->bno.isFullyCalibrated()){
-        //displayCalStatus();
-        serial_d("");
+        i->bno.getCalibration(&system, &gyro, &accel, &mag);
+        serial_d(cal_status_print(system, gyro, accel, mag));
         delay(BNO055_PERIOD_MILLISECS);
     }
 
@@ -63,7 +104,7 @@ void create_calibration(bno055_t *i){
     i->bno.getSensorOffsets(newCalib);
 
     serial_i("Calibration completed");
-    serial_d(newCalib);
+    serial_d(offsetsToString(newCalib));
 
     EEPROM.put(EE_ADDR, i->bnoID);
     EEPROM.put(EE_ADDR + sizeof(long), newCalib);
@@ -119,4 +160,22 @@ void bno055_reset_calibration(){
     EEPROM.put(EE_ADDR, 0);
     EEPROM.put(sizeof(long), 0);
     serial_d("EEprom reset");
+}
+
+String offsets_to_string(const adafruit_bno055_offsets_t &offsets){
+    String result = "Offsets:\n";
+    result += "Accel X: " + String(offsets.accel_offset_x) + ", ";
+    result += "Accel Y: " + String(offsets.accel_offset_y) + ", ";
+    result += "Accel Z: " + String(offsets.accel_offset_z) + "\n";
+    result += "Gyro X: " + String(offsets.gyro_offset_x) + ", ";
+    result += "Gyro Y: " + String(offsets.gyro_offset_y) + ", ";
+    result += "Gyro Z: " + String(offsets.gyro_offset_z) + "\n";
+    result += "Accel radius " + String(offsets.accel_radius) + ", ";
+    result += "Mag radius " + String(offsets.mag_radius);
+
+    return result;
+}
+
+String cal_status_print(uint8_t s, uint8_t g, uint8_t a, uint8_t m){
+    return "Sys: " + String(s) + "/3, Gyro: " + String(g) + "/3, Acc: " + String(a) + "/3, Mag: " + String(m) + "/3";
 }

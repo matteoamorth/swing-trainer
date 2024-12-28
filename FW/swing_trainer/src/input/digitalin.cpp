@@ -2,7 +2,7 @@
 
 typedef struct digitalin_t {
     uint8_t pin;       ///< Pin number associated with the digital input.
-    uint8_t t;         ///< Debounce time in milliseconds.
+    unsigned long t;         ///< Debounce time in milliseconds.
     bool reverse;      ///< Logic reversal flag.
 } digitalin_t;
 
@@ -32,4 +32,9 @@ bool digital_read(digitalin_t *i){
     assert(i);
     return i->reverse ^ digitalRead(i->pin);
 }
+
+bool digital_new_status(digitalin_t *i, unsigned long t_stamp){
+    return (t_stamp - i->t) >= DEBOUNCE_TIME ? (i->t = t_stamp, true) : false;
+}
+
 

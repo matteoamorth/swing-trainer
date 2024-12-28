@@ -16,7 +16,7 @@
 #include <stdlib.h>
 #include <assert.h>
 
-// ARDUINO LIBRARIES
+/*
 #include <Arduino.h>
 #include <EEPROM.h>
 #include <Wire.h>
@@ -25,7 +25,7 @@
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BNO055.h>
 #include <utility/imumaths.h>
-
+*/
 
 // CUSTOM LIBRARIES
 #include "input/BNO055.h"
@@ -92,10 +92,10 @@ typedef float data_t;
 #define CRESET "\e[0m"
 
 // MACRO 
-#define serial_e(msg)    Serial.print(RED)//; Serial.print(get_simulated_time()); Serial.print(" *** ERROR: "); Serial.println(msg); Serial.print(CRESET)
-#define serial_w(msg)    Serial.print(YEL)//; Serial.print(get_simulated_time()); Serial.print(" *** WARNING: "); Serial.println(msg); Serial.print(CRESET)
-#define serial_i(msg)    Serial.print(GRN)//; Serial.print(get_simulated_time()); Serial.print(" *** INFO: "); Serial.println(msg); Serial.print(CRESET)
-#define serial_d(msg)    Serial.print(BLU)//; Serial.print(get_simulated_time()); Serial.print(" *** DEBUG: "); Serial.println(msg); Serial.print(CRESET)
+#define serial_e(msg)    Serial.print(RED); Serial.print(millis()/500); Serial.print(" *** ERROR: "); Serial.println(msg); Serial.print(CRESET)
+#define serial_w(msg)    Serial.print(YEL); Serial.print(millis()/500); Serial.print(" *** WARNING: "); Serial.println(msg); Serial.print(CRESET)
+#define serial_i(msg)    Serial.print(GRN); Serial.print(millis()/500); Serial.print(" *** INFO: "); Serial.println(msg); Serial.print(CRESET)
+#define serial_d(msg)    Serial.print(BLU); Serial.print(millis()/500); Serial.print(" *** DEBUG: "); Serial.println(msg); Serial.print(CRESET)
 
 /* Butterworth low-pass parameters
 // 50 Hz
