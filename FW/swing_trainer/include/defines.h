@@ -16,7 +16,7 @@
 #include <stdlib.h>
 #include <assert.h>
 
-/*
+
 #include <Arduino.h>
 #include <EEPROM.h>
 #include <Wire.h>
@@ -25,7 +25,7 @@
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BNO055.h>
 #include <utility/imumaths.h>
-*/
+
 
 // CUSTOM LIBRARIES
 #include "input/BNO055.h"
@@ -53,7 +53,7 @@
 typedef float data_t;
 
 
-// GLOBAL VARIABLES
+// GLOBAL DEFINITIONS
 #define AVERAGE_READ 10
 #define EE_ADDR 0
 #define EEPROM_ADDRESS EE_ADDR
@@ -61,7 +61,32 @@ typedef float data_t;
 #define BUTTON_PIN 2
 #define HALL_SENSOR_PIN 4
 #define DEBOUNCE_TIME 500
+#define BASE_Y_THRESHOLD 9.0    // Base position (club down)
+#define UP_Z_THRESHOLD -9.0     // Club raised (up)
+#define TOLERANCE 2.0           // Allow ±2 variation
 
+// GLOBAL VARIABLES
+/**
+ * @brief IMU located in the club's head
+ */
+bno055_t *imu;
+
+digitalin_t * yaw_button;
+
+/**
+ * @brief Interrupt status for hall effect sensor
+ */
+bool hall_interrupt = false;
+
+/**
+ * @brief Debounce time reference for debugging
+ */
+unsigned long debugButtonLastDebounceTime = 0;
+
+/**
+ * @brief Yaw reference for trajectory evaluation
+ */
+float initialYaw = 0.0;         // Initial yaw (heading) reference
 
 
 #ifndef __ARDUINO_IDE
@@ -80,6 +105,13 @@ typedef float data_t;
 #define BNO055_PERIOD_MILLISECS 5000
 
 
+//   _____      _       _    
+//  |  __ \    (_)     | |   
+//  | |__) | __ _ _ __ | |_  
+//  |  ___/ '__| | '_ \| __| 
+//  | |   | |  | | | | | |_  
+//  |_|   |_|  |_|_| |_|\__|             
+
 //Regular text
 #define BLK "\e[0;30m"
 #define RED "\e[0;31m"
@@ -96,6 +128,14 @@ typedef float data_t;
 #define serial_w(msg)    Serial.print(YEL); Serial.print(millis()/500); Serial.print(" *** WARNING: "); Serial.println(msg); Serial.print(CRESET)
 #define serial_i(msg)    Serial.print(GRN); Serial.print(millis()/500); Serial.print(" *** INFO: "); Serial.println(msg); Serial.print(CRESET)
 #define serial_d(msg)    Serial.print(BLU); Serial.print(millis()/500); Serial.print(" *** DEBUG: "); Serial.println(msg); Serial.print(CRESET)
+
+
+//   ______ _ _ _                
+//  |  ____(_) | |               
+//  | |__   _| | |_ ___ _ __ ___ 
+//  |  __| | | | __/ _ \ '__/ __|
+//  | |    | | | ||  __/ |  \__ \
+//  |_|    |_|_|\__\___|_|  |___/
 
 /* Butterworth low-pass parameters
 // 50 Hz

@@ -1,45 +1,40 @@
 #include "include/defines.h"
 
+
 // BNO055 sensor
 //uint16_t BNO055_SAMPLERATE_DELAY_MS = 100;
 //Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28, &Wire);
-
-//bool t = true;
-
-bno055_t *imu;
-
-
-
-// debugButton
-unsigned long debugButtonLastDebounceTime = 0;
 
 // blinkLedFastNonBlocking variables
 static unsigned long blinkLedFastNonBlockingPreviousMillis = 0;
 bool blinkLedFastNonBlockingState = LOW;
 
-// clubMovement thresholds
-const float baseYThreshold = 9.0; // Base position (club down)
-const float upZThreshold = -9.0;  // Club raised (up)
-const float tolerance = 2.0;      // Allow ±2 variation
-
-// Initial orientation reference
-float initialYaw = 0.0;         // Initial yaw (heading) reference
-bool isYawReferenceSet = false; // Flag to ensure it's set only once
-
 
 void buttonISR(){
   // TODO: check if it works
-  if(digital_new_status(imu, millis()))
+  if(digital_new_status(yaw_button, millis()))
     initialYaw = imu_euler_x(imu);
+}
+
+void hallISR(){
+  hall_interrupt = true;
 }
 
 void setup(void){
 
   // pins
-  pinMode(BUTTON_PIN, INPUT_PULLUP); 
+  // TODO: check function 
+  //pinMode(BUTTON_PIN, INPUT_PULLUP); 
+  yaw_button = digital_new(BUTTON_PIN, DEBOUNCE_TIME, true, false);
   attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), buttonISR, FALLING);// Button
-  pinMode(LED_PIN, OUTPUT);          // Led
+  
+  
+
   pinMode(HALL_SENSOR_PIN, INPUT);   // Hall sensor
+  attachInterrupt(digitalPinToInterrupt(HALL_SENSOR_PIN), buttonISR, LOW);// Button
+
+  pinMode(LED_PIN, OUTPUT);          // Led
+  
 
   // serial port
   #if ARDUINO_BOARD
@@ -67,12 +62,18 @@ void setup(void){
 
   // end of setup
   digitalWrite(LED_PIN, HIGH);
+
 }
 
 #if 1
 
 
 void loop(void){
+
+  // interrupt services
+  if (hall_interrupt)
+    detectBallHit();
+  
 
 
   // Button to DEBUG accelerometer, gyroscope and linear acceleration data
@@ -96,15 +97,9 @@ void loop(void){
   //   printEvent(&accelerometerData);
   // }*/
 
-  // Button to recalibrate reference
-
-  // Process sensor events
-
+  
   // Detect movement
   detectClubMovement(imu);
-
-  // Hit the ball
-  detectBallHit();
 
   delay(BNO055_SAMPLERATE_DELAY_MS);
 }
@@ -117,13 +112,12 @@ void detectClubMovement(bno055_t *imu){
   float accelZ = imu_acc_z(imu);
 
   // Check if club is in base position
-  bool atBase = (accelY >= (baseYThreshold - tolerance) && accelY <= (baseYThreshold + tolerance));
+  bool atBase = (accelY >= (BASE_Y_THRESHOLD - TOLERANCE) && accelY <= (BASE_Y_THRESHOLD + TOLERANCE));
   // Check if club is in up position
-  bool atUp = (accelZ >= (upZThreshold - tolerance) && accelZ <= (upZThreshold + tolerance));
+  bool atUp = (accelZ >= (UP_Z_THRESHOLD - TOLERANCE) && accelZ <= (UP_Z_THRESHOLD + TOLERANCE));
 
   // Determine motion
-  if (!isUp && atUp)
-  {
+  if (!isUp && atUp){
     // Club is being raised
     serial_i("Club is being raised up!");
     isUp = true; // Update state
@@ -140,53 +134,33 @@ void detectClubMovement(bno055_t *imu){
   }
 }
 
-void detectBallHit()
-{
+void detectBallHit(){
+
+  float yaw = imu_euler_x(imu);
+  yaw = yaw - initialYaw;
+
+  // TODO Play sound hit
+
+  // Normalize yaw to handle wrap-around (0–360 degrees)
+  yaw = (yaw < -180) ? (yaw + 360) : (yaw > 180 ? (yaw - 360) : yaw);
+
   // Detect ball hit using the hall sensor
-  uint8_t hallSensor = digitalRead(HALL_SENSOR_PIN); // Read hall sensor state
+  Serial.println("Hit the ball!");
 
-  if (hallSensor == LOW) // Ball is hit
-  {
-    Serial.println("Hit the ball!");
+  serial_d("Relative Yaw: ");
+  serial_d(yaw);
 
-    // TODO Play sound hit
+  // Determine the direction of the ball based on yaw
+  Serial.println((yaw > 10.0) ? "Ball will go RIGHT!" : (yaw < -10.0) ? "Ball will go LEFT!" : "Ball will go STRAIGHT!");
 
-    // Get the current yaw (rotation angle)
-    imu::Vector<3> euler = imu->bno.getVector(Adafruit_BNO055::VECTOR_EULER);
-    float currentYaw = euler.x(); // Extract yaw (rotation around Z-axis)
+  delay(2000);
 
-    // Calculate relative yaw based on the initial calibration
-    float relativeYaw = currentYaw - initialYaw;
-
-    // Normalize yaw to handle wrap-around (0–360 degrees)
-    if (relativeYaw < -180)
-      relativeYaw += 360;
-    if (relativeYaw > 180)
-      relativeYaw -= 360;
-
-    // Print yaw angle for debugging
-    Serial.print("Relative Yaw: ");
-    Serial.println(relativeYaw);
-
-    // Determine the direction of the ball based on yaw
-    if (relativeYaw > 10.0) // Right threshold
-    {
-      Serial.println("Ball will go RIGHT!");
-    }
-    else if (relativeYaw < -10.0) // Left threshold
-    {
-      Serial.println("Ball will go LEFT!");
-    }
-    else
-    {
-      Serial.println("Ball will go STRAIGHT!");
-    }
-
-    // Wait for 3 seconds before detecting another hit
-    delay(3000);
-  }
+  // reset interrupt
+  hall_interrupt = false;
+  
 }
 
+/*
 void recalibrateYawReference()
 {
   imu::Vector<3> euler = imu->bno.getVector(Adafruit_BNO055::VECTOR_EULER);
@@ -194,7 +168,7 @@ void recalibrateYawReference()
   Serial.print("Yaw Reference Recalibrated: ");
   Serial.println(initialYaw);
 }
-
+*/
 // Function to blink LED fast non-blocking
 void blinkLedFastNonBlocking()
 {
