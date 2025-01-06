@@ -10,11 +10,11 @@ typedef struct bno055_t bno055_t;
 bno055_t *imu_new(uint8_t _id, uint8_t pin_sda, uint8_t pin_scl, bool calibrate);
 bool imu_connected(bno055_t *i);
 void imu_set_external_crystal(bno055_t *i);
-float imu_euler_x(bno055_t *i);
+data_t imu_euler_x(bno055_t *i);
 
-float imu_acc_x(bno055_t const *i);
-float imu_acc_y(bno055_t const *i);
-float imu_acc_z(bno055_t const *i);
+data_t imu_acc_x(bno055_t const *i);
+data_t imu_acc_y(bno055_t const *i);
+data_t imu_acc_z(bno055_t const *i);
 
 void create_calibration(bno055_t *i);
 void magnetometer_calibration(bno055_t *i);

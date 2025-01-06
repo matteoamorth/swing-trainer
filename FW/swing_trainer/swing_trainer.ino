@@ -1,19 +1,43 @@
 #include "include/defines.h"
 
+/**
+ * @brief IMU located in the club's head
+ */
+bno055_t *imu_swing;
+
+/**
+ * @brief Reset button located in the club's end
+ */
+digitalin_t *yaw_button;
+
+/**
+ * @brief Interrupt status for hall effect sensor
+ */
+bool hall_interrupt = false;
+
+/**
+ * @brief Debounce time reference for debugging
+ */
+unsigned long debugButtonLastDebounceTime = 0.0;
+
+/**
+ * @brief Yaw reference for trajectory evaluation
+ */
+float initialYaw = 0.0;         // Initial yaw (heading) reference
 
 // BNO055 sensor
 //uint16_t BNO055_SAMPLERATE_DELAY_MS = 100;
 //Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28, &Wire);
 
 // blinkLedFastNonBlocking variables
-static unsigned long blinkLedFastNonBlockingPreviousMillis = 0;
-bool blinkLedFastNonBlockingState = LOW;
+static unsigned long blinkPreviousMillis = 0;
+bool blinkState = LOW;
 
 
 void buttonISR(){
   // TODO: check if it works
   if(digital_new_status(yaw_button, millis()))
-    initialYaw = imu_euler_x(imu);
+    initialYaw = imu_euler_x(imu_swing);
 }
 
 void hallISR(){
@@ -27,8 +51,6 @@ void setup(void){
   //pinMode(BUTTON_PIN, INPUT_PULLUP); 
   yaw_button = digital_new(BUTTON_PIN, DEBOUNCE_TIME, true, false);
   attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), buttonISR, FALLING);// Button
-  
-  
 
   pinMode(HALL_SENSOR_PIN, INPUT);   // Hall sensor
   attachInterrupt(digitalPinToInterrupt(HALL_SENSOR_PIN), buttonISR, LOW);// Button
@@ -50,22 +72,20 @@ void setup(void){
 
 
   // imu setup
-  imu = imu_new(10, 18,19,true);
+  imu_swing = imu_new(10, 18,19,true);
 
-  while (!imu_connected(imu)){
+  while (!imu_connected(imu_swing)){
     Serial.print("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
     delay(2000);
   }
 
-  initialYaw = imu_euler_x(imu);
-  serial_i(String("Yaw: " + initialYaw));
+  initialYaw = imu_euler_x(imu_swing);
+  serial_i(String("Yaw: " + String(initialYaw)));
 
   // end of setup
   digitalWrite(LED_PIN, HIGH);
 
 }
-
-#if 1
 
 
 void loop(void){
@@ -74,8 +94,6 @@ void loop(void){
   if (hall_interrupt)
     detectBallHit();
   
-
-
   // Button to DEBUG accelerometer, gyroscope and linear acceleration data
   /*
     Press the button to print accelerometer, gyroscope and linear acceleration data
@@ -99,17 +117,17 @@ void loop(void){
 
   
   // Detect movement
-  detectClubMovement(imu);
+  detectClubMovement(imu_swing);
 
   delay(BNO055_SAMPLERATE_DELAY_MS);
 }
 
-void detectClubMovement(bno055_t *imu){
+void detectClubMovement(bno055_t *imu_swing){
   // State variables
   static bool isUp = false; // Tracks if the club is currently up
 
-  float accelY = imu_acc_y(imu);
-  float accelZ = imu_acc_z(imu);
+  data_t accelY = imu_acc_y(imu_swing);
+  data_t accelZ = imu_acc_z(imu_swing);
 
   // Check if club is in base position
   bool atBase = (accelY >= (BASE_Y_THRESHOLD - TOLERANCE) && accelY <= (BASE_Y_THRESHOLD + TOLERANCE));
@@ -136,7 +154,7 @@ void detectClubMovement(bno055_t *imu){
 
 void detectBallHit(){
 
-  float yaw = imu_euler_x(imu);
+  data_t yaw = imu_euler_x(imu_swing);
   yaw = yaw - initialYaw;
 
   // TODO Play sound hit
@@ -163,31 +181,23 @@ void detectBallHit(){
 /*
 void recalibrateYawReference()
 {
-  imu::Vector<3> euler = imu->bno.getVector(Adafruit_BNO055::VECTOR_EULER);
+  imu_swing::Vector<3> euler = imu_swing->bno.getVector(Adafruit_BNO055::VECTOR_EULER);
   initialYaw = euler.x(); // Reset initial yaw
   Serial.print("Yaw Reference Recalibrated: ");
   Serial.println(initialYaw);
 }
 */
 // Function to blink LED fast non-blocking
-void blinkLedFastNonBlocking()
-{
+void blinkLedFastNonBlocking(){
   unsigned long currentMillis = millis();
 
-  if (currentMillis - blinkLedFastNonBlockingPreviousMillis >= 250)
-  {
-    blinkLedFastNonBlockingPreviousMillis = currentMillis;
+  if (currentMillis - blinkPreviousMillis < BLINK_INTERVAL)
+    return;
 
-    if (blinkLedFastNonBlockingState == LOW)
-    {
-      blinkLedFastNonBlockingState = HIGH;
-    }
-    else
-    {
-      blinkLedFastNonBlockingState = LOW;
-    }
-    digitalWrite(LED_PIN, blinkLedFastNonBlockingState);
-  }
+  blinkPreviousMillis = currentMillis;
+  blinkState = !blinkState;
+  digitalWrite(LED_PIN, blinkState);
+  
 }
 
 void printEvent(sensors_event_t *event){
@@ -253,4 +263,3 @@ void printEvent(sensors_event_t *event){
   Serial.println(z);
 }
 
-#endif

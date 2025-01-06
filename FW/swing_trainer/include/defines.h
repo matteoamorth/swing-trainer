@@ -1,6 +1,11 @@
 #ifndef DEFINES_H
 #define DEFINES_H
 
+
+// COMMON TYPES
+typedef float data_t;
+
+
 //   _____            _           _           
 //  |_   _|          | |         | |          
 //    | |  _ __   ___| |_   _  __| | ___  ___ 
@@ -16,7 +21,6 @@
 #include <stdlib.h>
 #include <assert.h>
 
-
 #include <Arduino.h>
 #include <EEPROM.h>
 #include <Wire.h>
@@ -26,22 +30,15 @@
 #include <Adafruit_BNO055.h>
 #include <utility/imumaths.h>
 
-
 // CUSTOM LIBRARIES
 #include "input/BNO055.h"
-
-/*
-
-// CUSTOM INCLUDES
-#include "input/ADXL337.h"
-#include "input/analogsensor.h"
-#include "input/BNO055.h"
 #include "input/digitalin.h"
-#include "input/IR_GP2Y0A41.h"
-
+//#include "input/ADXL337.h"
+//#include "input/analogsensor.h"
+//#include "input/IR_GP2Y0A41.h"
 //#include "filters/IIRFilter.h"
 
-*/
+
 //   _____        __ _       _ _   _                 
 //  |  __ \      / _(_)     (_) | (_)                
 //  | |  | | ___| |_ _ _ __  _| |_ _  ___  _ __  ___ 
@@ -49,68 +46,64 @@
 //  | |__| |  __/ | | | | | | | |_| | (_) | | | \__ \
 //  |_____/ \___|_| |_|_| |_|_|\__|_|\___/|_| |_|___/
 
-// COMMON TYPES
-typedef float data_t;
-
-
 // GLOBAL DEFINITIONS
+
+// Application settings
+#define DRY true
+#define FLAVOURED_PRINT true
+#define FILTERS false
+
 #define AVERAGE_READ 10
-#define EE_ADDR 0
-#define EEPROM_ADDRESS EE_ADDR
-#define LED_PIN 3
-#define BUTTON_PIN 2
-#define HALL_SENSOR_PIN 4
-#define DEBOUNCE_TIME 500
+
+// Thresholds
 #define BASE_Y_THRESHOLD 9.0    // Base position (club down)
 #define UP_Z_THRESHOLD -9.0     // Club raised (up)
 #define TOLERANCE 2.0           // Allow ±2 variation
 
-// GLOBAL VARIABLES
-/**
- * @brief IMU located in the club's head
- */
-bno055_t *imu;
+// Board settings
+#define ARDUINO_BOARD 0
+#define TEENSY_BOARD 1
+#define BAUD_ARDUINO 9800
+#define BAUD_TEENSY 115200
+#define EE_ADDR 0
+#define EEPROM_ADDRESS EE_ADDR
 
-digitalin_t * yaw_button;
+// Pin definition
+#define LED_PIN 3
+#define BUTTON_PIN 2
+#define HALL_SENSOR_PIN 4
 
-/**
- * @brief Interrupt status for hall effect sensor
- */
-bool hall_interrupt = false;
+// Timing
+#define BLINK_INTERVAL 250
+#define DEBOUNCE_TIME 500
+#define BNO055_PERIOD_MILLISECS 5000
 
-/**
- * @brief Debounce time reference for debugging
- */
-unsigned long debugButtonLastDebounceTime = 0;
-
-/**
- * @brief Yaw reference for trajectory evaluation
- */
-float initialYaw = 0.0;         // Initial yaw (heading) reference
-
-
+// Compatibility IDE
 #ifndef __ARDUINO_IDE
 #define __ARDUINO_IDE
 #define INPUT_PULLUP 0x2
 #define OUTPUT 0x1
 #define INPUT 0x0
+#define HIGH 0x1
+#define LOW 0x0
 #endif
 
-// board selection
-#define ARDUINO_BOARD 0
-#define TEENSY_BOARD 1
-#define BAUD_ARDUINO 9800
-#define BAUD_TEENSY 115200
 
-#define BNO055_PERIOD_MILLISECS 5000
-
-
+/*
 //   _____      _       _    
 //  |  __ \    (_)     | |   
 //  | |__) | __ _ _ __ | |_  
 //  |  ___/ '__| | '_ \| __| 
 //  | |   | |  | | | | | |_  
 //  |_|   |_|  |_|_| |_|\__|             
+*/
+#if not FLAVOURED_PRINT
+#define serial_e(msg) Serial.println(msg)
+#define serial_w(msg) Serial.println(msg)
+#define serial_i(msg) Serial.println(msg)
+#define serial_d(msg) Serial.println(msg)
+
+#else
 
 //Regular text
 #define BLK "\e[0;30m"
@@ -129,7 +122,9 @@ float initialYaw = 0.0;         // Initial yaw (heading) reference
 #define serial_i(msg)    Serial.print(GRN); Serial.print(millis()/500); Serial.print(" *** INFO: "); Serial.println(msg); Serial.print(CRESET)
 #define serial_d(msg)    Serial.print(BLU); Serial.print(millis()/500); Serial.print(" *** DEBUG: "); Serial.println(msg); Serial.print(CRESET)
 
+#endif
 
+#if FILTERS
 //   ______ _ _ _                
 //  |  ____(_) | |               
 //  | |__   _| | |_ ___ _ __ ___ 
@@ -151,3 +146,4 @@ double a_lp_10Hz[] = {1.000000000000, -3.835825540647, 5.520819136622, -3.533535
 double b_lp_10Hz[] = {0.000000898486146, 0.000003593944586, 0.000005390916878, 0.000003593944586, 0.000000898486146};
 */
 #endif 
+#endif

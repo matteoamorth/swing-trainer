@@ -45,40 +45,48 @@ void imu_set_external_crystal(bno055_t *i){
     i->bno.setExtCrystalUse(true);
 }
 
-float imu_euler_x(bno055_t *i){
+data_t imu_euler_x(bno055_t *i){
     assert(i);
     return i->bno.getVector(Adafruit_BNO055::VECTOR_EULER).x();
 }
 
-float imu_acc_x(bno055_t *i){
+#if not DRY
+data_t imu_acc_x(bno055_t *i){
     assert(i);
     sensors_event_t a;
     i->bno.getEvent(&a, Adafruit_BNO055::VECTOR_ACCELEROMETER);
     return a.acceleration.x;
 }
 
-float imu_acc_y(bno055_t *i){
+data_t imu_acc_y(bno055_t *i){
     assert(i);
     sensors_event_t a;
     i->bno.getEvent(&a, Adafruit_BNO055::VECTOR_ACCELEROMETER);
     return a.acceleration.y;
 }
 
-float imu_acc_z(bno055_t *i){
+data_t imu_acc_z(bno055_t *i){
     assert(i);
     sensors_event_t a;
     i->bno.getEvent(&a, Adafruit_BNO055::VECTOR_ACCELEROMETER);
     return a.acceleration.z;
 }
-    
+
+#else
+
 #define imu_acc_getter(axis)                                        \
-    float imu_acc_##axis(bno055_t const *i) {                       \
+    data_t imu_acc_##axis(bno055_t const *i) {                      \
         assert(i);                                                  \
         sensors_event_t a;                                          \
         i->bno.getEvent(&a, Adafruit_BNO055::VECTOR_ACCELEROMETER); \
         return a.acceleration.axis;                                 \
     }
 
+imu_acc_getter(x);
+imu_acc_getter(y);
+imu_acc_getter(z);
+
+#endif
 // Generazione delle funzioni
 
 
@@ -104,7 +112,7 @@ void create_calibration(bno055_t *i){
     i->bno.getSensorOffsets(newCalib);
 
     serial_i("Calibration completed");
-    serial_d(offsetsToString(newCalib));
+    //serial_d(offsetsToString(newCalib));
 
     EEPROM.put(EE_ADDR, i->bnoID);
     EEPROM.put(EE_ADDR + sizeof(long), newCalib);
