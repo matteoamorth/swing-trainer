@@ -4,6 +4,7 @@
 
 // COMMON TYPES
 typedef float data_t;
+static bool isUp = false;
 
 
 //   _____            _           _           
@@ -42,6 +43,7 @@ typedef float data_t;
 
 // Application settings
 #define FLAVOURED_PRINT false
+#define HAPTIC_FEEDBACK true
 
 
 // Thresholds
@@ -56,6 +58,7 @@ typedef float data_t;
 #define BAUD_TEENSY 115200
 #define EE_ADDR 0
 #define EEPROM_ADDRESS EE_ADDR
+#define CALIBRATION_SIZE 22
 
 // Pin definition
 #define LED_PIN 3
@@ -73,23 +76,12 @@ typedef float data_t;
 
 // Timing
 #define BLINK_INTERVAL 250
-#define DEBOUNCE_TIME 500
+#define DEBOUNCE_TIME 500000
 #define BNO055_SAMPLERATE_DELAY_MS 100
 
 // Ribbon settings
 #define RIBBON_CENTRAL_VALUE 700
 #define RIBBON_TOLERANCE 0.1
-
-// Compatibility IDE
-#ifndef __ARDUINO_IDE
-#define __ARDUINO_IDE
-#define INPUT_PULLUP 0x2
-#define OUTPUT 0x1
-#define INPUT 0x0
-#define HIGH 0x1
-#define LOW 0x0
-#endif
-
 
 /*
 //   _____      _       _    
@@ -126,16 +118,18 @@ typedef float data_t;
 #endif
 
 // function declarations
+void blinkLED();
 void detectClubMovement(Adafruit_BNO055 bno, float ref_yaw);
-void detectBallHit(Adafruit_BNO055 bno);
-void recalibrateYawReference();
-void saveCalibration();
-void loadCalibration();
+void detectBallHit(Adafruit_BNO055 bno, float initialRoll, float initialPitch, float initialYaw);
+void handleLEDFeedback(float roll);
+void recalibrateYawReference(Adafruit_BNO055& bno, float& initialRoll, float& initialPitch, float& initialYaw);
+void saveCalibration(Adafruit_BNO055 bno);
+void loadCalibration(Adafruit_BNO055 bno);
 bool checkCalibrationSaved();
-void IMUcalibration(Adafruit_BNO055 bno);
+void IMUcalibration(Adafruit_BNO055& bno, float& initialRoll, float& initialPitch, float& initialYaw);
 void clearEEPROM();
 void printCalibration(uint8_t system, uint8_t gyro, uint8_t accel, uint8_t mag);
-void sendData(Adafruit_BNO055 bno);
+void sendData(Adafruit_BNO055 bno, float initialRoll, float initialPitch, float initialYaw);
 void hand_feedback(int pin);
 
 #endif

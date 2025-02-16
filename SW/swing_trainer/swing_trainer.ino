@@ -1,9 +1,14 @@
 #include "defines.h"
 
 /**
- * @brief Interrupt status for hall effect sensor
+ * @brief IMU object for swing
  */
-bool hall_interrupt = false;
+Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28, &Wire);
+
+/**
+* @brief Timer for LED blink
+*/
+IntervalTimer myTimer;
 
 /**
  * @brief Debounce time reference for debugging
@@ -11,25 +16,23 @@ bool hall_interrupt = false;
 unsigned long debugButtonLastDebounceTime = 0.0;
 
 /**
- * @brief Yaw reference for trajectory evaluation
+ * @brief Yaw, Roll and Pitch reference for trajectory evaluation
  */
 float initialYaw = 0.0;         // Initial yaw (heading) reference
 
+float initialRoll = 0.0;        // Initial roll reference
+
+float initialPitch = 0.0;       // Initial pitch reference
+
 /**
- * @brief IMU object for swing
+ * @brief Interrupt status for hall effect sensor
  */
-Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28, &Wire);
+bool hall_interrupt = false;
 
-
-
-
-void buttonISR(){
-  // TODO: check if it works
-  if(digital_new_status(yaw_button, millis()))
-    initialYaw = imu_euler_x(imu_swing);
-}
-
-void hitDetected(){
+/**
+ *  @brief Interrupt handler for hall effect sensor
+ * */
+void hallInterrupt(){
   if(digitalRead(BUTTON_TRIGGER) == LOW)
     hall_interrupt = true;
 }
@@ -51,11 +54,10 @@ void setup(void){
   pinMode(LED_RIGHT, OUTPUT);
   pinMode(VIBRATOR, OUTPUT);
 
-  attachInterrupt(digitalPinToInterrupt(HALL_SENSOR_PIN), hitDetected, LOW);
+  attachInterrupt(digitalPinToInterrupt(HALL_SENSOR_PIN), hallInterrupt, LOW);
 
-  
+  myTimer.begin(blinkLED, DEBOUNCE_TIME); // 500ms
 
-  // serial port
   #if ARDUINO_BOARD
   Serial.begin(BAUD_ARDUINO);
   #endif
@@ -65,39 +67,38 @@ void setup(void){
   #endif
 
   while (!Serial)
-    delay(10); // wait for serial port to open!
+    delay(10);
 
   if (!bno.begin()){
     Serial.print("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
     while (1);
   }
 
-  bno.setExtCrystalUse(true);       // Use external crystal for better accuracy
-  bno.setMode(OPERATION_MODE_NDOF); // Set sensor mode to NDOF
+  bno.setExtCrystalUse(true);       
+  bno.setMode(OPERATION_MODE_NDOF); 
 
-  // Load calibration from EEPROM
   if (checkCalibrationSaved())
-    loadCalibration();
+    loadCalibration(bno);
   else{
     Serial.println("No saved calibration found.");
-    IMUcalibration(bno);
+    IMUcalibration(bno, initialRoll, initialPitch, initialYaw);
   }
 }
 
 
 void loop(void){
-  sendData(bno);
+  sendData(bno, initialRoll, initialPitch, initialYaw);
 
   detectClubMovement(bno, initialYaw);
 
-  // interrupt services
-  if (hall_interrupt)
-    detectBallHit();
+  if (hall_interrupt){
+    detectBallHit(bno, initialRoll, initialPitch, initialYaw);
+    hall_interrupt = false;
+  }
 
-  // Button to recalibrate reference
   if (digitalRead(BUTTON_PIN) == LOW && (millis() - debugButtonLastDebounceTime > DEBOUNCE_TIME)){
     debugButtonLastDebounceTime = millis();
-    recalibrateYawReference();
+    recalibrateYawReference(bno, initialRoll, initialPitch, initialYaw);
   }
 
   hand_feedback(BUTTON_TRIGGER);
